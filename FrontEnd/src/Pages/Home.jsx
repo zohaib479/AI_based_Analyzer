@@ -14,25 +14,21 @@ function Home() {
   const [language, setLanguage] = useState("javascript");
   const [isLoading, setIsLoading] = useState(false);
 
+  // ✅ File upload handler
+  const handleFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text(); // file ka text read karo
+    setCode(text);                  // editor mai daal do
+  };
+
   const reviewCode = async () => {
     setReview("");
     setIsLoading(true);
-
     try {
-      console.log("Sending Code:", code);
-
-      const { data } = await axios.post(
-        "http://localhost:3000/ai/get-review",
-        { code }
-      );
-
-      console.log("Response:", data);
-
-      // ✅ SAFE FIX (IMPORTANT)~
+      const { data } = await axios.post("http://localhost:3000/ai/get-review", { code });
       setReview(data);
-
     } catch (error) {
-      console.error("Error:", error.response?.data || error.message);
       setReview("Error while analyzing code ❌");
     } finally {
       setIsLoading(false);
@@ -42,12 +38,8 @@ function Home() {
   return (
     <>
       <main>
-        {/* LEFT SIDE */}
         <div className="left">
-          <select
-            onChange={(e) => setLanguage(e.target.value)}
-            value={language}
-          >
+          <select onChange={(e) => setLanguage(e.target.value)} value={language}>
             <option value="cpp">C++</option>
             <option value="javascript">JavaScript</option>
             <option value="python">Python</option>
@@ -69,11 +61,7 @@ function Home() {
               highlight={(code) =>
                 Prism.languages[language]
                   ? Prism.highlight(code, Prism.languages[language], language)
-                  : Prism.highlight(
-                      code,
-                      Prism.languages.javascript,
-                      "javascript"
-                    )
+                  : Prism.highlight(code, Prism.languages.javascript, "javascript")
               }
               padding={10}
               style={{
@@ -89,19 +77,16 @@ function Home() {
             />
           </div>
 
+          {/* ✅ File Input + Analyze Button */}
+          <input type="file" accept=".js,.jsx,.ts,.cpp,.c,.java,.py,.html,.css" onChange={handleFile} />
           <button className="review" onClick={reviewCode}>
             {isLoading ? "Analyzing..." : "Analyze"}
           </button>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="right">
           <div className={`loader ${isLoading ? "show" : ""}`}></div>
-
-          {/* ✅ SAFE Markdown render */}
-          <Markdown rehypePlugins={[rehypeHighlight]}>
-            {review}
-          </Markdown>
+          <Markdown rehypePlugins={[rehypeHighlight]}>{review}</Markdown>
         </div>
       </main>
     </>
